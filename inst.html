@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagramhelp</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fafafa;
+            color: #262626;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background-color: #0095f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #007bb5;
+        }
+
+        #cameraFeed {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #capturedPhoto {
+            margin-top: 20px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Instagram</h1>
+        
+        <button id="takePhotoBtn">Take Photo</button>
+        <div id="cameraFeed"></div>
+        <img id="capturedPhoto" src="" alt="Captured Photo" style="display:none;">
+    </div>
+
+    <script>
+        document.getElementById('takePhotoBtn').addEventListener('click', function() {
+            const cameraFeed = document.getElementById('cameraFeed');
+            const capturedPhoto = document.getElementById('capturedPhoto');
+
+            // Access the camera
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    cameraFeed.srcObject = stream;
+                    cameraFeed.style.display = 'block';
+
+                    // Create a canvas to capture the photo
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+
+                    // Set canvas dimensions to match the video feed
+                    canvas.width = cameraFeed.videoWidth;
+                    canvas.height = cameraFeed.videoHeight;
+
+                    // Draw the current frame from the video feed onto the canvas
+                    context.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
+
+                    // Convert the canvas image to a data URL and set it as the src of the captured photo
+                    capturedPhoto.src = canvas.toDataURL('image/png');
+                    capturedPhoto.style.display = 'block';
+
+                    // Stop the video stream
+                    stream.getTracks().forEach(track => track.stop());
+                    cameraFeed.style.display = 'none';
+                })
+                .catch(function(error) {
+                    console.error('Error accessing the camera:', error);
+                    alert('Error accessing the camera. Please make sure you have granted the necessary permissions.');
+                });
+        });
+    </script>
+</body>
+</html>
