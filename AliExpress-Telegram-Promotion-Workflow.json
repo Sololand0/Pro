@@ -1,0 +1,134 @@
+{
+  "name": "ترويج منتج تيليجرام لشركاء AliExpress",
+  "nodes": [
+    {
+      "parameters": {
+        "cronTimes": {
+          "hour": 15,
+          "minute": 0
+        }
+      },
+      "id": "scheduler",
+      "name": "مُشغِّل بعد الظهر اليومي",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.affiliate.aliExpress.com/query?appKey={{YOUR_APP_KEY}}&method=api.queryProducts&category=best_selling&pageSize=50",
+        "options": {}
+      },
+      "id": "fetchProducts",
+      "name": "جلب منتجات AliExpress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// تصفية وتحديد أفضل 30 منتجًا\nconst products = $input.first().json.data.products;\nconst filteredProducts = products\n  .filter(product => product.shippingType && product.shippingType.includes('AliExpress Standard Shipping'))\n  .sort((a, b) => b.orders - a.orders)\n  .slice(0, 30);\n\nreturn filteredProducts.map(product => ({\n  json: {\n    title: product.title,\n    price: product.price,\n    productUrl: product.productUrl\n  }\n}));"
+      },
+      "id": "processProducts",
+      "name": "معالجة وتصفية المنتجات",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "waitFor": {
+          "value": 2,
+          "unit": "minutes"
+        }
+      },
+      "id": "delayNode",
+      "name": "التأخير بين المنشورات",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendMessage",
+        "text": "={{ $json[\"title\"] }}\n\nالسعر: ${{ $json[\"price\"] }}\n\n{{ $json[\"productUrl\"] }}",
+        "additionalFields": {}
+      },
+      "id": "telegramNode",
+      "name": "نشر على تيليجرام",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "معرف بيانات اعتمادك على الهاتف",
+          "name": "واجهة برمجة تطبيقات تيليجرام"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "مُشغِّل بعد الظهر اليومي": {
+      "main": [
+        [
+          {
+            "node": "جلب منتجات AliExpress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "جلب منتجات AliExpress": {
+      "main": [
+        [
+          {
+            "node": "معالجة وتصفية المنتجات",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "معالجة وتصفية المنتجات": {
+      "main": [
+        [
+          {
+            "node": "التأخير بين المنشورات",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "التأخير بين المنشورات": {
+      "main": [
+        [
+          {
+            "node": "نشر على تيليجرام",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "AliExpress-Telegram-Promotion"
+}
